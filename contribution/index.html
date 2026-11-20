@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Pay securely</title>
+<meta name="theme-color" content="#010048">
+<link rel="preconnect" href="https://js.paystack.co">
+<link rel="preconnect" href="https://checkout.paystack.com">
+<link rel="preload" href="https://js.paystack.co/v1/inline.js" as="script">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   MY COLORS (Nzuko Students)
+   Navy #010048 : top band, footer, step circles, links
+   Gold #f2b705 : the Pay button and highlights
+   Dark mode uses deeper tones of the same navy.
+   ============================================================ */
+:root{
+  --primary:#010048;      /* Nzuko Students navy: top band, footer, step circles */
+  --primary-ink:#ffffff;  /* white text on the navy */
+  --accent:#f2b705;       /* gold: the Pay button */
+  --accent-ink:#1d1600;   /* dark text on the gold button */
+  /* page background, cards, text and borders: soft tones that sit well with the navy */
+  --bg:#f5f7fb; --surface:#ffffff; --ink:#0f1b33; --muted:#5a6785;
+  --line:#dde0ee; --tint:#e9e9f6; --link:#010048; --danger:#b3261e; --ok:#127a45;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    /* dark mode: deeper navy tones */
+    --primary:#010048; --bg:#05061c; --surface:#0c0e2e; --ink:#e9eefb; --muted:#9aa8c4;
+    --line:#22255a; --tint:#14174a; --link:#a9b4ff; --danger:#ff8a80; --ok:#5fd394;
+    color-scheme:dark;
+  }
+}
+*{box-sizing:border-box}
+html{height:100%;scroll-padding-top:env(safe-area-inset-top,0)}
+body{margin:0;min-height:100%;background:var(--bg);color:var(--ink);font:400 16px/1.6 "Plus Jakarta Sans",system-ui,sans-serif;
+  display:flex;flex-direction:column;padding-bottom:env(safe-area-inset-bottom,0)}
+a{color:var(--link)}
+
+/* top bar + hero */
+.top{background:var(--primary);color:var(--primary-ink);padding-top:env(safe-area-inset-top,0)}
+.bar{max-width:1080px;margin:0 auto;padding:16px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.brand{display:flex;align-items:center;gap:12px;font-weight:700;letter-spacing:.01em}
+.logo{width:42px;height:42px;border-radius:12px;background:var(--accent);color:var(--accent-ink);display:grid;place-items:center;font-weight:800;overflow:hidden;flex:none}
+.logo img{width:100%;height:100%;object-fit:cover}
+.lock{font-size:.82rem;font-weight:600;padding:6px 12px;border:1px solid rgba(255,255,255,.35);border-radius:999px;white-space:nowrap}
+.hero{max-width:1080px;margin:0 auto;padding:36px 20px 104px}
+.hero h1{margin:0 0 14px;font-weight:800;font-size:clamp(2rem,5.2vw,3.1rem);line-height:1.08;letter-spacing:-.025em;max-width:16ch}
+.hero p{margin:0;max-width:52ch;opacity:.88;font-size:1.05rem}
+
+/* layout */
+.main{max-width:1080px;width:100%;margin:0 auto;padding:0 20px 56px;display:grid;grid-template-columns:1fr 430px;gap:48px;align-items:start;flex:1}
+.main>*{min-width:0}
+.info{padding-top:36px;order:1}
+.card{order:2;margin-top:-72px;background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:28px;box-shadow:0 18px 40px -22px rgba(10,25,60,.45)}
+.card h2{margin:0 0 4px;font-size:1.25rem;font-weight:800}
+.card .sub{margin:0 0 18px;color:var(--muted);font-size:.92rem}
+label{display:block;font-weight:600;font-size:.86rem;margin:14px 0 6px}
+input,select{width:100%;padding:13px 14px;border:1px solid var(--line);border-radius:12px;background:var(--bg);color:var(--ink);font:inherit}
+input:focus-visible,select:focus-visible,button:focus-visible,summary:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.amounts{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:6px}
+.amounts button{padding:11px 2px;border:1.5px solid var(--line);border-radius:12px;background:var(--bg);color:var(--ink);font-weight:700;font-size:.92rem;font-family:inherit;cursor:pointer;min-height:46px;transition:border-color .15s,background .15s}
+.amounts button:hover{border-color:var(--primary)}
+.amounts button[aria-pressed="true"]{border-color:var(--primary);background:var(--tint);color:var(--link)}
+.pay{width:100%;margin-top:22px;padding:15px;border:0;border-radius:14px;background:var(--accent);color:var(--accent-ink);font-weight:800;font-size:1.05rem;font-family:inherit;cursor:pointer}
+.pay:hover{filter:brightness(.96)}
+.pay:disabled{opacity:.7;cursor:progress}
+.hint{font-size:.82rem;color:var(--danger);margin-top:6px}
+.hint:empty{display:none}
+input[aria-invalid="true"]{border-color:var(--danger)}
+.msg{margin-top:12px;font-size:.9rem;min-height:1.3em}
+.msg.err{color:var(--danger)}
+.assure{display:flex;justify-content:center;gap:16px;flex-wrap:wrap;margin-top:14px;color:var(--muted);font-size:.8rem}
+#done{display:none;text-align:center;padding:12px 0 4px}
+#done .tick{width:60px;height:60px;border-radius:50%;background:var(--tint);color:var(--ok);display:grid;place-items:center;margin:0 auto 16px;font-size:1.8rem;font-weight:800}
+#done h2{font-size:1.4rem}
+#done p{color:var(--muted);margin:8px 0}
+.ref{display:inline-block;max-width:100%;overflow-wrap:anywhere;margin:8px 0 18px;padding:8px 14px;border-radius:10px;background:var(--bg);border:1px dashed var(--line);font-weight:700;word-break:break-all}
+.ghost{padding:12px 20px;border-radius:12px;border:1.5px solid var(--line);background:transparent;color:var(--ink);font-weight:700;font-size:.95rem;font-family:inherit;cursor:pointer}
+
+/* info column */
+.info h3{font-size:1.15rem;font-weight:800;margin:0 0 16px}
+.steps{list-style:none;padding:0;margin:0 0 36px;display:grid;gap:18px;counter-reset:s}
+.steps li{display:grid;grid-template-columns:36px 1fr;gap:14px;counter-increment:s}
+.steps li::before{content:counter(s);width:36px;height:36px;border-radius:50%;background:var(--primary);color:var(--primary-ink);display:grid;place-items:center;font-weight:800;font-size:.95rem}
+.steps b{display:block}
+.steps span{color:var(--muted);font-size:.94rem}
+details{border-top:1px solid var(--line);padding:14px 0}
+details:last-of-type{border-bottom:1px solid var(--line)}
+summary{cursor:pointer;font-weight:700;list-style:none;display:flex;justify-content:space-between;gap:12px}
+summary::-webkit-details-marker{display:none}
+summary::after{content:"+";font-weight:800;color:var(--link)}
+details[open] summary::after{content:"\2212"}
+details p{margin:10px 0 0;color:var(--muted);font-size:.94rem}
+
+footer a{color:inherit}
+footer{background:var(--primary);color:var(--primary-ink);padding:22px 20px calc(22px + env(safe-area-inset-bottom,0));font-size:.86rem}
+footer div{max-width:1080px;margin:0 auto;display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;opacity:.9}
+
+@media (min-width:1400px){
+  body{font-size:17px}
+  .bar,.hero,.main,footer div{max-width:1200px}
+  .main{grid-template-columns:1fr 470px}
+}
+@media (max-width:1000px){.main{gap:32px;grid-template-columns:1fr 390px}}
+@media (max-width:860px){
+  .main{grid-template-columns:1fr;gap:0}
+  .card{order:1;margin-top:-64px;padding:24px}
+  .info{order:2;padding-top:36px}
+  .hero{padding-bottom:88px}
+}
+@media (max-width:480px){
+  .bar,.hero,.main{padding-left:16px;padding-right:16px}
+  .row{grid-template-columns:1fr;gap:0}
+  .amounts{grid-template-columns:repeat(2,1fr)}
+  .card{padding:20px;border-radius:18px}
+  .lock{display:none}
+}
+@media (max-width:340px){.card{padding:16px}.hero h1{font-size:1.75rem}}
+@media (max-height:500px) and (orientation:landscape){.hero{padding:20px 20px 72px}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="bar">
+    <div class="brand"><span class="logo" id="logo"></span><span id="bizName"></span></div>
+    <span class="lock">Secure payment</span>
+  </div>
+  <div class="hero">
+    <h1 id="title"></h1>
+    <p id="desc"></p>
+  </div>
+</header>
+
+<main class="main">
+  <section class="info" aria-label="About this payment">
+    <h3>How it works</h3>
+    <ol class="steps">
+      <li><div><b>Enter your details</b><span>Choose an amount and add your name, room number and email.</span></div></li>
+      <li><div><b>Pay with Paystack</b><span>A secure window opens. Pay by card, bank transfer, USSD or mobile money.</span></div></li>
+      <li><div><b>Get your receipt</b><span>Paystack emails you a receipt as soon as the payment goes through.</span></div></li>
+    </ol>
+
+    <h3>Common questions</h3>
+    <details><summary>Is my card information safe?</summary><p>Yes. You enter payment details in Paystack's secure window. This page never sees or stores your card number.</p></details>
+    <details><summary>What if I get charged but see no confirmation?</summary><p>Keep your payment reference and contact us with it. We can confirm the payment from our records.</p></details>
+    <details><summary>Can I choose my own amount?</summary><p>Yes. Tap one of the amounts or type any amount you like.</p></details>
+  </section>
+
+  <section class="card" aria-labelledby="payHeading">
+    <div id="formWrap">
+      <h2 id="payHeading">Payment details</h2>
+      <p class="sub" id="subText"></p>
+
+      <div class="amounts" id="amounts" role="group" aria-label="Choose an amount"></div>
+
+      <label for="amount" id="amountLabel">Amount</label>
+      <input id="amount" type="number" inputmode="decimal" min="1" step="any" placeholder="Enter amount">
+      <div class="hint" id="amountHint" role="alert"></div>
+
+      <label for="name">Full name</label>
+      <input id="name" type="text" autocomplete="name" placeholder="Your name">
+
+      <label for="room">Room number</label>
+      <input id="room" type="text" autocomplete="off" maxlength="3" autocapitalize="characters" placeholder="e.g. A4">
+      <div class="hint" id="roomHint" role="alert"></div>
+
+      <div class="row">
+        <div><label for="email">Email</label>
+        <input id="email" type="email" autocomplete="email" placeholder="you@example.com"></div>
+        <div><label for="phone">Phone (optional)</label>
+        <input id="phone" type="tel" autocomplete="tel" placeholder="080..."></div>
+      </div>
+
+      <button class="pay" id="payBtn" type="button">Pay now</button>
+      <div class="msg" id="msg" role="status" aria-live="polite"></div>
+      <div class="assure"><span>Secured by Paystack</span><span>Card, transfer, USSD</span></div>
+    </div>
+
+    <div id="done" role="status" aria-live="polite">
+      <div class="tick" aria-hidden="true">&#10003;</div>
+      <h2>Thank you</h2>
+      <p>Your payment was received. A receipt is on its way to your email.</p>
+      <div class="ref" id="refText"></div>
+      <div><button class="ghost" id="again" type="button">Make another payment</button></div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div><span id="footName"></span><a href="../">All payment options</a><span>Website by Dannyel Onuoha</span></div>
+</footer>
+
+<script>
+/* ============================================================
+   1. MY PAYSTACK SETTINGS (Blessed Evermore Lodge)
+
+   How my site works:
+   - "/" is the hub with 5 cards. Each card opens one payment page:
+     /donation, /contribution, /dues, /event-support, /other.
+   - This page is /contribution. Every payment made here is tagged "Contribution" in Paystack.
+   - A guest enters the amount, name, room number and email (phone is optional),
+     then pays in Paystack's popup by card, transfer or USSD.
+   - Paystack keeps each payment with the name, email, phone, room number and
+     "Contribution". I see them in Paystack Dashboard > Transactions (Live mode).
+   ============================================================ */
+const CONFIG = {
+  // My Paystack public key (Dashboard > Settings > API Keys & Webhooks).
+  // pk_live_ = real payments (in use now). pk_test_ = test payments only.
+  // My secret key (sk_...) never goes in this file.
+  PAYSTACK_PUBLIC_KEY: "pk_live_d1c2ffc54f62564103d2fec3e540847c3abb1902",
+
+  BUSINESS_NAME: "Blessed Evermore Lodge",   // shown in the header, footer and browser tab
+  LOGO_URL: "",   // empty = initials badge; paste the Nzuko logo link here to show a logo
+  TITLE: "Make a contribution",
+  DESCRIPTION: "Add your contribution securely. A receipt is sent to your email.",
+  CURRENCY: "NGN",   // naira; the page sends Paystack the amount in kobo
+  PRESET_AMOUNTS: [1000, 2000, 5000, 10000],   // quick-pick buttons: ₦1,000 to ₦10,000
+  PURPOSE: "Contribution",   // tag sent to Paystack so I can tell my 5 pages apart
+  ALLOW_CUSTOM_AMOUNT: true,   // guests can type their own amount
+  MIN_AMOUNT: 1000,   // lowest payment allowed: ₦1,000
+  ROOM_REQUIRED: true,   // guests must fill in their room number
+  ROOM_FORMAT: /^[A-D](?:[1-9]|1[0-2])$/,   // my rooms: A1 to A12, B1 to B12, C1 to C12, D1 to D12 (nothing else)
+  FIXED_AMOUNT: null,   // null = the guest chooses the amount
+
+  // Not used yet: no server of mine confirms payments, so I check Paystack Dashboard > Transactions.
+  VERIFY_URL: "",
+  // Not used: guests stay on this page and see the thank-you panel.
+  SUCCESS_REDIRECT: ""
+};
+
+/* ============================================================
+   2. HOW THE PAGE WORKS: checks the form, opens Paystack, shows the thank-you
+   ============================================================ */
+const $ = id => document.getElementById(id);
+
+// Paystack's popup has a Copy button for the transfer account number. The browser only lets
+// it copy if the popup window is allowed to use the clipboard, so allow it when it opens.
+new MutationObserver(list => list.forEach(r => r.addedNodes.forEach(n => {
+  if (n.nodeType !== 1) return;
+  (n.tagName === "IFRAME" ? [n] : [...n.querySelectorAll("iframe")]).forEach(f => f.setAttribute("allow", "clipboard-write"));
+}))).observe(document.documentElement, {childList:true, subtree:true});
+const sym = {NGN:"₦",GHS:"GH₵",ZAR:"R",KES:"KSh",USD:"$"}[CONFIG.CURRENCY] || CONFIG.CURRENCY + " ";
+const fmt = n => sym + Number(n).toLocaleString();
+
+document.title = CONFIG.BUSINESS_NAME + " | " + CONFIG.PURPOSE;
+$("bizName").textContent = CONFIG.BUSINESS_NAME;
+$("footName").textContent = "© " + new Date().getFullYear() + " " + CONFIG.BUSINESS_NAME;
+$("title").textContent = CONFIG.TITLE;
+$("desc").textContent = CONFIG.DESCRIPTION;
+$("amountLabel").textContent = "Amount (" + CONFIG.CURRENCY + ")";
+if (CONFIG.LOGO_URL) { const i = document.createElement("img"); i.src = CONFIG.LOGO_URL; i.alt = ""; $("logo").appendChild(i); }
+else $("logo").textContent = CONFIG.BUSINESS_NAME.split(/\s+/).slice(0,2).map(w => w[0]).join("").toUpperCase();
+
+
+const amountInput = $("amount");
+amountInput.min = CONFIG.MIN_AMOUNT;
+amountInput.placeholder = "Minimum " + fmt(CONFIG.MIN_AMOUNT);
+$("subText").textContent = "Minimum payment is " + fmt(CONFIG.MIN_AMOUNT) + ". Your receipt is sent to your email.";
+CONFIG.PRESET_AMOUNTS = CONFIG.PRESET_AMOUNTS.filter(a => a >= CONFIG.MIN_AMOUNT);
+const chips = () => document.querySelectorAll("#amounts button");
+function updateBtn(){
+  const a = parseFloat(amountInput.value);
+  $("payBtn").textContent = a > 0 ? "Pay " + fmt(a) : "Pay now";
+}
+if (CONFIG.FIXED_AMOUNT) {
+  amountInput.value = CONFIG.FIXED_AMOUNT; amountInput.readOnly = true; $("amounts").hidden = true;
+} else {
+  CONFIG.PRESET_AMOUNTS.forEach(a => {
+    const b = document.createElement("button");
+    b.type = "button"; b.textContent = fmt(a); b.setAttribute("aria-pressed","false");
+    b.onclick = () => { amountInput.value = a; chips().forEach(x => x.setAttribute("aria-pressed", x === b)); updateBtn(); checkAmount(); };
+    $("amounts").appendChild(b);
+  });
+  if (!CONFIG.PRESET_AMOUNTS.length) $("amounts").hidden = true;
+  if (!CONFIG.ALLOW_CUSTOM_AMOUNT) amountInput.readOnly = true;
+  amountInput.addEventListener("input", () => { chips().forEach(x => x.setAttribute("aria-pressed","false")); updateBtn(); checkAmount(); });
+}
+updateBtn();
+
+function hint(id, el, text){ $(id).textContent = text || ""; el.setAttribute("aria-invalid", text ? "true" : "false"); }
+// Shows the minimum message as soon as someone types an amount below the minimum.
+function checkAmount(){
+  const v = amountInput.value.trim();
+  const low = v !== "" && !(parseFloat(v) >= CONFIG.MIN_AMOUNT);
+  hint("amountHint", amountInput, low ? "The minimum amount is " + fmt(CONFIG.MIN_AMOUNT) + "." : "");
+  return !low;
+}
+// My rooms are A1 to A12, B1 to B12, C1 to C12 and D1 to D12 only. Letters are made capital as people type.
+const roomInput = $("room");
+function checkRoom(final){
+  roomInput.value = roomInput.value.toUpperCase().replace(/\s+/g, "");
+  const v = roomInput.value;
+  let msg = "";
+  const bad = "Rooms are A1 to A12, B1 to B12, C1 to C12 and D1 to D12.";
+  if (v && !/^[A-D]$/.test(v) && !CONFIG.ROOM_FORMAT.test(v)) msg = bad;
+  else if (final && v && !CONFIG.ROOM_FORMAT.test(v)) msg = bad;
+  hint("roomHint", roomInput, msg);
+  return !msg;
+}
+roomInput.addEventListener("input", () => checkRoom(false));
+roomInput.addEventListener("blur", () => checkRoom(true));
+
+function say(text, cls){ const m = $("msg"); m.textContent = text; m.className = "msg " + (cls || ""); }
+function showDone(ref){
+  $("refText").textContent = ref;
+  $("formWrap").style.display = "none";
+  $("done").style.display = "block";
+  if (CONFIG.SUCCESS_REDIRECT) window.location.href = CONFIG.SUCCESS_REDIRECT + "?reference=" + encodeURIComponent(ref);
+}
+$("again").addEventListener("click", () => {
+  $("done").style.display = "none"; $("formWrap").style.display = "block";
+  if (!CONFIG.FIXED_AMOUNT) { amountInput.value = ""; chips().forEach(x => x.setAttribute("aria-pressed","false")); }
+  $("room").value = ""; checkAmount(); checkRoom(false);
+  say(""); updateBtn();
+});
+
+/* ---- Paystack loading: start early, retry if it was slow or blocked ---- */
+let psLoading = null;
+function ensurePaystack(){
+  if (typeof PaystackPop !== "undefined") return Promise.resolve();
+  if (psLoading) return psLoading;
+  psLoading = new Promise((resolve, reject) => {
+    const old = document.getElementById("psScript");
+    if (old) old.remove();
+    const s = document.createElement("script");
+    s.id = "psScript"; s.src = "https://js.paystack.co/v1/inline.js";
+    const t = setTimeout(() => { psLoading = null; reject(new Error("timeout")); }, 12000);
+    s.onload = () => { clearTimeout(t); psLoading = null; typeof PaystackPop !== "undefined" ? resolve() : reject(new Error("missing")); };
+    s.onerror = () => { clearTimeout(t); psLoading = null; reject(new Error("load")); };
+    document.head.appendChild(s);
+  });
+  return psLoading;
+}
+ensurePaystack().catch(() => {});
+
+/* ---- Remember an unfinished payment so leaving the page does not lose it ---- */
+const STORE = "pay_pending_" + CONFIG.PURPOSE;
+const MAX_AGE = 30 * 60 * 1000;   // an unfinished payment is remembered for 30 minutes
+function loadPending(){
+  try { const p = JSON.parse(localStorage.getItem(STORE) || "null"); if (p && Date.now() - p.t < MAX_AGE) return p; localStorage.removeItem(STORE); } catch(e){}
+  return null;
+}
+function savePending(p){ try { localStorage.setItem(STORE, JSON.stringify(p)); } catch(e){} }
+function clearPending(){ try { localStorage.removeItem(STORE); } catch(e){} }
+
+let current = null;      // the payment being made right now: {reference, amount, name, email, phone, room, t}
+let active = false;      // true from the moment the popup opens until it is paid or closed on purpose
+let openGuard = null;
+
+function checkoutVisible(){
+  return [...document.querySelectorAll("iframe")].some(f => /paystack/i.test(f.src || f.name || f.id || "") && f.offsetWidth > 0 && f.offsetHeight > 0);
+}
+function setBusy(b, label){
+  const btn = $("payBtn"); btn.disabled = b;
+  if (b) btn.textContent = label || "Opening secure window…"; else updateBtn();
+}
+function release(){ clearTimeout(openGuard); active = false; setBusy(false); }
+
+function finish(ref){
+  clearPending(); release(); current = null;
+  if (!CONFIG.VERIFY_URL) return showDone(ref);
+  fetch(CONFIG.VERIFY_URL, {method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({reference: ref})})
+    .then(r => r.ok ? showDone(ref) : say("Payment went through but we could not confirm it. Keep this reference: " + ref, "err"))
+    .catch(() => say("Payment went through but we could not confirm it. Keep this reference: " + ref, "err"));
+}
+
+function openCheckout(p){
+  active = true; current = p; savePending({...p, active:true});
+  setBusy(true);
+  const [first, ...rest] = p.name.split(" ");
+  let handler;
+  try {
+    handler = PaystackPop.setup({
+      key: CONFIG.PAYSTACK_PUBLIC_KEY,
+      email: p.email,
+      amount: Math.round(p.amount * 100),
+      currency: CONFIG.CURRENCY,
+      ref: p.reference,
+      firstname: first,
+      lastname: rest.join(" "),
+      phone: p.phone,
+      metadata: { custom_fields: [
+        { display_name: "Giving for", variable_name: "purpose", value: CONFIG.PURPOSE },
+        { display_name: "Room number", variable_name: "room_number", value: p.room },
+        { display_name: "Customer name", variable_name: "customer_name", value: p.name },
+        { display_name: "Phone", variable_name: "phone", value: p.phone }
+      ]},
+      callback: function(response){ finish(response.reference || p.reference); },
+      onClose: function(){
+        // The person closed the window on purpose. Keep the reference so a retry resumes the same payment.
+        active = false; clearTimeout(openGuard); savePending({...p, active:false}); setBusy(false);
+        say("Payment window closed. If you already paid, check your email for the receipt. Otherwise tap Pay to continue.");
+      }
+    });
+    handler.openIframe();
+  } catch(e) {
+    release(); say("Could not open the payment window. Please tap Pay again.", "err"); return;
+  }
+  // Safety net: if the window never appears, free the button so nobody has to refresh.
+  clearTimeout(openGuard);
+  openGuard = setTimeout(() => {
+    if (active && !checkoutVisible()) { release(); say("The payment window did not open. Please tap Pay again.", "err"); }
+  }, 10000);
+}
+
+// Coming back to the page (from a bank app, another tab, or the phone sleeping): bring the window back if it vanished.
+function restoreIfNeeded(){
+  if (document.visibilityState !== "visible" || !active || !current) return;
+  if (checkoutVisible()) return;
+  ensurePaystack().then(() => { if (active && current && !checkoutVisible()) openCheckout(current); }).catch(() => { release(); say("Connection problem. Tap Pay to continue your payment.", "err"); });
+}
+document.addEventListener("visibilitychange", restoreIfNeeded);
+window.addEventListener("pageshow", restoreIfNeeded);
+window.addEventListener("focus", () => setTimeout(restoreIfNeeded, 300));
+
+$("payBtn").addEventListener("click", () => {
+  if ($("payBtn").disabled) return;
+  const amount = parseFloat(amountInput.value);
+  const email = $("email").value.trim();
+  const name = $("name").value.trim();
+  const phone = $("phone").value.trim();
+  const room = $("room").value.trim().toUpperCase();
+
+  if (!amount || amount < CONFIG.MIN_AMOUNT) { hint("amountHint", amountInput, "The minimum amount is " + fmt(CONFIG.MIN_AMOUNT) + "."); amountInput.focus(); return; }
+  if (!name) return say("Enter your full name.", "err");
+  if (CONFIG.ROOM_REQUIRED && !room) { hint("roomHint", roomInput, "Enter your room number, like A4."); roomInput.focus(); return; }
+  if (room && !checkRoom(true)) { roomInput.focus(); return; }
+  if (!/^\S+@\S+\.\S+$/.test(email)) return say("Enter a valid email address so we can send your receipt.", "err");
+  if (!CONFIG.PAYSTACK_PUBLIC_KEY || CONFIG.PAYSTACK_PUBLIC_KEY.includes("xxxx"))
+    return say("Add your Paystack public key in the CONFIG block at the top of the script.", "err");
+
+  // Reuse the reference of an unfinished payment with the same details so it resumes instead of duplicating.
+  const prev = loadPending();
+  const same = prev && prev.amount === amount && prev.email === email;
+  const reference = same ? prev.reference : "PAY_" + Date.now() + "_" + Math.floor(Math.random() * 1e6);
+  const p = {reference, amount, name, email, phone, room, t: Date.now()};
+
+  say(""); setBusy(true);   // instant feedback on tap
+  ensurePaystack().then(() => openCheckout(p)).catch(() => {
+    release(); say("Paystack could not load. Check your internet connection and tap Pay again.", "err");
+  });
+});
+
+// If the browser reloaded the page while a payment was open, put the form back and reopen the window.
+(function resume(){
+  const p = loadPending();
+  if (!p) return;
+  if (!CONFIG.FIXED_AMOUNT) amountInput.value = p.amount;
+  $("name").value = p.name; $("email").value = p.email; $("phone").value = p.phone; roomInput.value = p.room;
+  updateBtn();
+  if (p.active) {
+    say("Resuming your unfinished payment…");
+    ensurePaystack().then(() => openCheckout(p)).catch(() => { release(); say("Tap Pay to continue your payment.", "err"); });
+  } else say("You have an unfinished payment. Tap Pay to continue.");
+})();
+</script>
+</body>
+</html>
